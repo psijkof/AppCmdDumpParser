@@ -12,7 +12,7 @@ namespace XMLParserDaniel
     {
         static void Main(string[] args)
         {
-            var appCmdDump = XElement.Load($@"{Path.GetTempPath()}\RGPD-sites-aspserver-compressed.xml");
+            var appCmdDump = XElement.Load($@"{Path.GetTempPath()}\sites.xml");
             var outputSheet = Path.Combine(Path.GetTempPath(), "sitesExcel.xlsx");
 
             var sites = appCmdDump.Elements("SITE");
@@ -66,21 +66,27 @@ namespace XMLParserDaniel
 
                         // create consumable url from binding info
                         bindingInfo = binding.Attribute("bindingInformation").Value;
+
+                        row.CreateCell(2, CellType.String).SetCellValue(bindingInfo);
+
                         var protocol = binding.Attribute("protocol").Value;
                         var biParts = bindingInfo.Split(':');
-                        var url = protocol + "://" + biParts[biParts.Length - 1] + ":" + biParts[1];
+                        var url = "not specified.";
+                        var goodUrl = false;
+
+                        if (biParts.Length >= 2)
+                        {
+                            url = protocol + "://" + biParts[biParts.Length - 1] + ":" + biParts[1];
+                            goodUrl = Uri.IsWellFormedUriString(url,UriKind.Absolute);
+                        }
 
                         // write binding info
-                        row.CreateCell(2, CellType.String).SetCellValue(bindingInfo);
                         row.CreateCell(3, CellType.String).SetCellValue(url);
-                        //row.GetCell(3).Hyperlink = new XSSFHyperlink(HyperlinkType.Url);
-                        //try
-                        //{
-                        //    row.GetCell(3).Hyperlink.Address = url;
-                        //}
-                        //catch (Exception)
-                        //{
-                        //}
+                        if (goodUrl)
+                        {
+                            row.GetCell(3).Hyperlink = new XSSFHyperlink(HyperlinkType.Url);
+                            row.GetCell(3).Hyperlink.Address = url;
+                        }
                         rowNr++;
                     }
                 }
